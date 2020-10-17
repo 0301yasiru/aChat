@@ -37,5 +37,9 @@ def recv_msg():
 sending_thread = threading.Thread(target=send_msg)
 receving_thread = threading.Thread(target=recv_msg)
 
+#starting threads
 sending_thread.start()
 receving_thread.start()
+#killing threads
+sending_thread.join()
+receving_thread.join()

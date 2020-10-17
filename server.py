@@ -44,6 +44,7 @@ def handle_client(conn, addr):
                 break
             print(f'[MSG] from {addr} -> {message}')
     conn.close()
+    send_m.join()
 
 def main():
     server.listen()
