@@ -94,5 +94,20 @@ class Client():
             print("[ERROR] Connection error")
             exit(0)
 
-client_instance = Client('0301yasiru', '192.168.56.1', 5050)
+
+def read_conf_file():
+    with open('client.conf', 'r') as config_file:
+        config_data = config_file.readlines()
+
+    client_conf_data = {}
+
+    for line in config_data:
+        line = line.split()
+        client_conf_data[line[0]] = line[1:]
+
+    return client_conf_data
+
+conf_data = read_conf_file()
+
+client_instance = Client(conf_data['client_id:'], '192.168.56.1', 5050)
 client_instance.start_client()

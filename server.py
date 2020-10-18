@@ -135,5 +135,5 @@ class Server():
         # kill the thread after loop exited
         client_thread.join()
 
-server_instance = Server(socket.gethostbyname(socket.gethostname()), 5050)
+server_instance = Server('192.168.1.3', 5050)
 server_instance.start_server()
