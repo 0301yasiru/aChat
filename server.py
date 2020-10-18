@@ -117,12 +117,12 @@ class Server():
         while True:
             #accept thread
             conn, addr = self.server.accept()
-            print(f'[CONNECTION] new connection from {addr[0]} | {addr[1]}')
-            print(f'[DETAILS] now {threading.active_count()}(s) clients are online')
 
             #now recive the client id from the client
             client_id = self.recv_message(conn)
-            print(client_id)
+
+            print(f'[CONNECTION] new connection from {addr[0]} | {addr[1]} | {client_id}')
+            print(f'[DETAILS] now {threading.active_count()}(s) clients are online')
 
             #add client details for the dictionary
             self.client_details[client_id] = [conn, [], []]
