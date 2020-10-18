@@ -109,5 +109,5 @@ def read_conf_file():
 
 conf_data = read_conf_file()
 
-client_instance = Client(conf_data['client_id:'][0], '192.168.1.3', 5050)
+client_instance = Client(conf_data['client_id:'][0], conf_data['host:'][0], int(conf_data['port:'][0]))
 client_instance.start_client()
