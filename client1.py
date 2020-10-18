@@ -54,7 +54,7 @@ class Client():
                 return False
 
         except ConnectionResetError:
-            exit()
+            exit(0)
 
     def __handle_client(self):
         # create threads for recive messages and send messages
@@ -94,5 +94,5 @@ class Client():
             print("[ERROR] Connection error")
             exit(0)
 
-client_instance = Client('0301yasiru', '192.168.56.1', 5050)
+client_instance = Client('poolni', '192.168.56.1', 5050)
 client_instance.start_client()
