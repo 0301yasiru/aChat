@@ -187,8 +187,6 @@ class Server():
             #start thread
             client_thread.start()
 
-            print(self.client_details)
-
         # kill the thread after loop exited
         client_thread.join()
         # close the connection
