@@ -1,3 +1,7 @@
+# !/usr/bin/python
+# programmed by Yasiru Senerath
+# this is the script for the server
+
 import threading
 import socket
 
@@ -10,7 +14,7 @@ class Server():
         self.client_details = {}
 
         # in client details the details of client will be saved as follow
-        #key- client_id
+        # key- client_id
         # client_id : [conn, [parter], [messages,]]
 
         self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
