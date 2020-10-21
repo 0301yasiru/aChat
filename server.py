@@ -4,6 +4,12 @@
 
 import threading
 import socket
+from random import randint
+from sys import exit
+from time import sleep
+from datetime import datetime
+from datetime import date
+import multiprocessing
 
 class Server():
     def __init__(self, host, port):    
@@ -13,12 +19,17 @@ class Server():
         self.buffer = 64
         self.client_details = {}
 
+        self.error_log = '' # to be initialized
+        self.server_log = '' # to be initialized
+
         # in client details the details of client will be saved as follow
         # key- client_id
         # client_id : [conn, [parter], [messages,]]
 
         self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server.bind(self.addr)
+
+        self.terminate = False
 
     def __eject_client(self, client_id):
         """
@@ -35,8 +46,11 @@ class Server():
             #secondly delete the current session of the client
             del(self.client_details[client_id])
             print('[EJECT] client ejcted -> {}'.format(client_id))
-        except IndexError:
-            pass
+            self.server_log.write(datetime.now().strftime("%H:%M:%S ==> "))
+            self.server_log.write('[EJECT] client ejcted -> {}\n'.format(client_id))
+        except IndexError as err:
+            self.error_log.write(datetime.now().strftime("%H:%M:%S ==> "))
+            self.error_log.write('[INDEXERR] err msg -> {}\n'.format(err))
 
     def __hidden_send(self,conn, client_id):
         """
@@ -47,13 +61,15 @@ class Server():
         """
         # if the reject function removes client from the client list
         # this function must be terminated to check whether id in the list
-        while client_id in self.client_details:
+        while (client_id in self.client_details) and (not self.terminate):
             # check if crrent client has messages in queu
             # if then forward it to them
             if len(self.client_details[client_id][2]):
                 message = self.client_details[client_id][2].pop(0)
                 self.send_message(conn, message, client_id)
                 print(f'[FORWARD] msg forwarded to -> {client_id}')
+                self.server_log.write(datetime.now().strftime("%H:%M:%S ==> "))
+                self.server_log.write(f'[FORWARD] msg forwarded to -> {client_id}\n')
 
     def __hidden_recv(self, conn, client_id):
         """
@@ -63,7 +79,7 @@ class Server():
         """
         # if the reject function removes client from the client list
         # this function must be terminated to check whether id in the list
-        while client_id in self.client_details:
+        while (client_id in self.client_details) and (not self.terminate):
             # firstly recive the message
             message = self.recv_message(conn, client_id)
             # check if the message is a none type then do not proceed
@@ -71,6 +87,8 @@ class Server():
                 # then check if that is a command if not procees
                 if not self.__run_commands(message, conn, client_id):
                     print(f'[RECIVED] msg recived from -> {client_id}')
+                    self.server_log.write(datetime.now().strftime("%H:%M:%S ==> "))
+                    self.server_log.write(f'[RECIVED] msg recived from -> {client_id}\n')
                     # put that message in the partners message queue
                     partner = self.client_details[client_id][1][0]
                     self.client_details[partner][2].append(message)
@@ -95,6 +113,8 @@ class Server():
         # and OS error may be occure if non socket object interaced
         except OSError as err:
             print('[OSERROR] error msg -> {}'.format(err))
+            self.error_log.write(datetime.now().strftime("%H:%M:%S ==> "))
+            self.error_log.write('[OSERROR] error msg -> {}\n'.format(err))
 
     def recv_message(self, conn, client_id=None):
         """
@@ -127,14 +147,21 @@ class Server():
         # then we should remove the client from the reords so eject
         except ConnectionResetError as err:
             print('[CONRESETERROR] error msg -> {}'.format(err))
+            self.error_log.write(datetime.now().strftime("%H:%M:%S ==> "))
+            self.error_log.write('[CONRESETERROR] error msg -> {}\n'.format(err))
+
             conn.settimeout(None)
             self.__eject_client(client_id)
             return False
     
         # if time out or non socket will rais this error
         except OSError as err:
-            if str(err) == 'timed out': conn.settimeout(None)
-            else: print('[OSERROR] error msg -> {}'.format(err))
+            if str(err) == 'timed out': 
+                conn.settimeout(None)
+            else: 
+                print('[OSERROR] error msg -> {}'.format(err))
+                self.error_log.write(datetime.now().strftime("%H:%M:%S ==> "))
+                self.error_log.write('[OSERROR] error msg -> {}\n'.format(err))
 
     def __run_commands(self, message, conn, client_id):
         """
@@ -152,7 +179,9 @@ class Server():
         try:
             conn.settimeout(None)
             message = message.strip().split()
-        except AttributeError:
+        except AttributeError as err:
+            self.error_log.write(datetime.now().strftime("%H:%M:%S ==> "))
+            self.error_log.write('[ATTRERROR] error msg -> {}\n'.format(err))
             return False
         
         try:
@@ -169,6 +198,8 @@ class Server():
                         self.client_details[message[1]][2] = [f'You are connected to -> {client_id}']
                         self.client_details[client_id][2]  = [f'You are connected to -> {message[1]}']
                         print('[BINDED] {} and {} are binded'.format(client_id, message[1]))
+                        self.server_log.write(datetime.now().strftime("%H:%M:%S ==> "))
+                        self.server_log.write('[BINDED] {} and {} are binded\n'.format(client_id, message[1]))
 
                     else:
                         self.send_message(conn, '[-] Requested client already bounded', client_id)
@@ -185,7 +216,9 @@ class Server():
             else:
                 return False
 
-        except IndexError:
+        except IndexError as err:
+            self.error_log.write(datetime.now().strftime("%H:%M:%S ==> "))
+            self.error_log.write('[INDEXERR] error msg -> {}\n'.format(err))
             return False
 
     def __handle_clients(self, conn, addr, client_id):
@@ -204,7 +237,7 @@ class Server():
         # until a the user have and partner we cannot gofurther. the client must have an partner
         # to chat with. so wait until client recive and partne id
 
-        while not self.client_details[client_id][1]:
+        while (not self.client_details[client_id][1]) and (not self.terminate) :
             # recive messgae
             message = self.recv_message(conn, client_id)
             if message:
@@ -230,7 +263,7 @@ class Server():
             reciving_thread.join()
             sending_thread.join()
 
-    def start_server(self):
+    def __main_server_start(self):
         """
             DOCSTRING: this function will start the server.
             This server will accept many number of clients.
@@ -240,9 +273,11 @@ class Server():
         self.server.listen()
 
         print('[START] Server is online and live')
+        self.server_log.write(datetime.now().strftime("%H:%M:%S ==> "))
+        self.server_log.write('[START] Server is online and live')
 
         # accpet infinit clients
-        while True:
+        while not self.terminate:
             #accept thread
             conn, addr = self.server.accept()
             #now recive the client id from the client
@@ -250,6 +285,8 @@ class Server():
 
             print(f'[CONNECTION] new connection from {addr[0]} | {addr[1]} | {client_id}')
             print(f'[DETAILS] now {threading.active_count()}(s) clients are online')
+            self.server_log.write(datetime.now().strftime("%H:%M:%S ==> "))
+            self.server_log.write(f'[CONNECTION] new connection from {addr[0]} | {addr[1]} | {client_id}\n')
 
             #add client details for the dictionary
             self.client_details[client_id] = [conn, [], []]
@@ -263,5 +300,63 @@ class Server():
         # close the connection
         conn.close()
 
-server_instance = Server('192.168.1.2', 5151)
-server_instance.start_server()
+    def __main_master_input(self):
+        """
+        DOCSTRING: this is the main function that allows to run various commands on the server
+        for example list down clients, shut down the server, restart the server
+        """
+        while True:
+            # wait for the input from the user
+            command = input().strip()
+            # if command is the power off
+            if command == 'poweroff':
+                # set master shut down
+                print('[SHUTDOWN] The server is shutting down in 10s .', end='')
+                for _ in range (10):
+                    sleep(1)
+                    print(' .', end='')
+
+                self.server_log.write(datetime.now().strftime("%H:%M:%S ==> "))
+                self.server_log.write('[SHUTDOWN] The server is shutting down\n')
+                self.terminate = True
+                break
+        
+        #close the opened log files
+        self.server_log.close()
+        self.error_log.close()
+        # after waiting the system must be terminated
+        exit(0)
+
+    def start_server(self):
+        """
+        DOCSTRING: the function of this function is simple, create two proccess for the server
+        start function and main input function and run it
+        """
+        # fisrt of all create two files for the server and error logging
+        prefix = 'logs\\' + str(date.today()) + '__' + str(datetime.now().strftime('%H_%M_'))
+        self.error_log = open(prefix + 'error_log.txt', 'w')
+        self.server_log = open(prefix + 'server_log.txt', 'w')
+
+        # firstly create two thread for the input and main server start
+        # server_start = threading.Thread(target=self.__main_server_start)
+        # master_input = threading.Thread(target=self.__main_master_input)
+        
+        server_start = multiprocessing.Process(target=self.__main_server_start)
+        master_input = multiprocessing.Process(target=self.__main_master_input)
+
+        # start both threads
+        server_start.start()
+        master_input.start()
+
+        #join both threads
+        server_start.join()
+        master_input.join()
+        
+        #double check for log file closing
+        self.server_log.close()
+        self.error_log.close()
+
+
+if __name__ == '__main__':
+    server_instance = Server('192.168.1.2', 5151)
+    server_instance.start_server()
