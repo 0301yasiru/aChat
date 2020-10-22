@@ -5,11 +5,9 @@
 import threading
 import socket
 from random import randint
-from sys import exit
 from time import sleep
 from datetime import datetime
 from datetime import date
-import multiprocessing
 
 class Server():
     def __init__(self, host, port):    
@@ -28,6 +26,7 @@ class Server():
 
         self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server.bind(self.addr)
+        self.server.settimeout(5)
 
         self.terminate = False
 
@@ -190,9 +189,9 @@ class Server():
                 # chech if requested client online and live
                 if message[1] in self.client_details:
                     #check if requested client already bound
-                    if not len(self.client_details[message[1]][1]):
-                        self.client_details[message[1]][1].append(client_id)
-                        self.client_details[client_id][1].append(message[1])
+                    if self.client_details[message[1]][1] != None:
+                        self.client_details[message[1]][1][0] = client_id
+                        self.client_details[client_id][1][0] = message[1]
 
                         # sentd the connection status for booth clients
                         self.client_details[message[1]][2] = [f'You are connected to -> {client_id}']
@@ -200,7 +199,6 @@ class Server():
                         print('[BINDED] {} and {} are binded'.format(client_id, message[1]))
                         self.server_log.write(datetime.now().strftime("%H:%M:%S ==> "))
                         self.server_log.write('[BINDED] {} and {} are binded\n'.format(client_id, message[1]))
-
                     else:
                         self.send_message(conn, '[-] Requested client already bounded', client_id)
                 else:
@@ -237,7 +235,7 @@ class Server():
         # until a the user have and partner we cannot gofurther. the client must have an partner
         # to chat with. so wait until client recive and partne id
 
-        while (not self.client_details[client_id][1]) and (not self.terminate) :
+        while (self.client_details[client_id][1][0] == None) and (not self.terminate) :
             # recive messgae
             message = self.recv_message(conn, client_id)
             if message:
@@ -249,7 +247,7 @@ class Server():
                 client_aborted = True
                 del(self.client_details[client_id])
                 break
-        
+
         if not client_aborted:
             # create threads for recive messages and send messages
             reciving_thread = threading.Thread(target=self.__hidden_recv, args=(conn, client_id))
@@ -278,28 +276,40 @@ class Server():
 
         # accpet infinit clients
         while not self.terminate:
-            #accept thread
-            conn, addr = self.server.accept()
-            #now recive the client id from the client
-            client_id = self.recv_message(conn)
+            try:
+                #accept thread
+                conn, addr = self.server.accept()
+                #now recive the client id from the client
+                client_id = self.recv_message(conn)
 
-            print(f'[CONNECTION] new connection from {addr[0]} | {addr[1]} | {client_id}')
-            print(f'[DETAILS] now {threading.active_count()}(s) clients are online')
-            self.server_log.write(datetime.now().strftime("%H:%M:%S ==> "))
-            self.server_log.write(f'[CONNECTION] new connection from {addr[0]} | {addr[1]} | {client_id}\n')
+                print(f'[CONNECTION] new connection from {addr[0]} | {addr[1]} | {client_id}')
+                self.server_log.write(datetime.now().strftime("%H:%M:%S ==> "))
+                self.server_log.write(f'[CONNECTION] new connection from {addr[0]} | {addr[1]} | {client_id}\n')
 
-            #add client details for the dictionary
-            self.client_details[client_id] = [conn, [], []]
-            #create thread for the client
-            client_thread = threading.Thread(target=self.__handle_clients, args=(conn, addr, client_id))
-            #start thread
-            client_thread.start()
+                #add client details for the dictionary
+                self.client_details[client_id] = [conn, [None], []]
+                print(f'[DETAILS] now {len(self.client_details)}(s) clients are online')
+                #create thread for the client
+                client_thread = threading.Thread(target=self.__handle_clients, args=(conn, addr, client_id))
+                #start thread
+                client_thread.start()
+            
+            except OSError as err:
+                if str(err) != 'timed out':
+                    print('[OSERROR] error msg -> {}'.format(err))
+                    self.error_log.write(datetime.now().strftime("%H:%M:%S ==> "))
+                    self.error_log.write('[OSERROR] error msg -> {}\n'.format(err))
 
-        # kill the thread after loop exited
-        client_thread.join()
-        # close the connection
-        conn.close()
+        try:
+            # close the connection
+            conn.close()
+            # kill the thread after loop exited
+            client_thread.join()
 
+        except UnboundLocalError:
+            # this error may be occur if the server sutsdown even before one client onnect
+            pass
+            
     def __main_master_input(self):
         """
         DOCSTRING: this is the main function that allows to run various commands on the server
@@ -311,21 +321,76 @@ class Server():
             # if command is the power off
             if command == 'poweroff':
                 # set master shut down
-                print('[SHUTDOWN] The server is shutting down in 10s .', end='')
-                for _ in range (10):
-                    sleep(1)
-                    print(' .', end='')
+                print('[SHUTDOWN] The server is shutting down', end='')
 
                 self.server_log.write(datetime.now().strftime("%H:%M:%S ==> "))
-                self.server_log.write('[SHUTDOWN] The server is shutting down\n')
+                self.server_log.write('[SHUTDOWN] The server will shutdown in 10 seconds\n')
                 self.terminate = True
                 break
+
+            elif command == 'list_clients' or command == 'clients':
+                    
+                # firstly get client ids
+                client_ids = list(self.client_details.keys())
+                client_ids.insert(0, 'U_NAME')
+                # then get client keys
+                client_vals = self.client_details.values()
+                # client addrs and partnets from the values
+                client_combination = [(item[0].getpeername(), item[1][0]) for item in client_vals]
+                # we dont need vals any moe delete it from the ram
+                del(client_vals)
+                # devide addresses and partner names
+                client_addr, client_part = zip(*client_combination)
+                client_part = list(client_part)
+                client_part.insert(0, 'PARTNER')
+                client_part = list(map(str, client_part))
+                # dlete the client combination
+                del(client_combination)
+                # devide ips and ports from the addrs
+                client_ips, client_ports = map(list, zip(*client_addr))
+                client_ips.insert(0, 'IP ADDR')
+                client_ports.insert(0, 'PORT')
+                # delete client address
+                del(client_addr)
+
+                # form the size table
+                sizes = [max(map(lambda item : len(item), client_ids)) + 2]
+                sizes.append(max(map(lambda item : len(item), client_ips)) + 2)
+                sizes.append(max(map(lambda item : len(str(item)), client_ports)) + 2)
+                sizes.append(max(map(lambda item : len(str(item)), client_part)) + 2)
+
+                # print the table
+
+                print('+{}+{}+{}+{}+'.format('-'*sizes[0], '-'*sizes[1], '-'*sizes[2], '-'*sizes[3]))
+
+                print('|{0:^{4}}|{1:^{5}}|{2:^{6}}|{3:^{7}}|'.format(
+                    client_ids[0], client_ips[0], client_ports[0], client_part[0],
+                    sizes[0], sizes[1], sizes[2], sizes[3]
+                ))
+
+                print('+{}+{}+{}+{}+'.format('-'*sizes[0], '-'*sizes[1], '-'*sizes[2], '-'*sizes[3]))
+
+                for i in range(1, len(client_ids)):
+                    print('|{0:^{4}}|{1:^{5}}|{2:^{6}}|{3:^{7}}|'.format(
+                        client_ids[i], client_ips[i], client_ports[i], client_part[i],
+                        sizes[0], sizes[1], sizes[2], sizes[3]
+                    ))
+
+                print('+{}+{}+{}+{}+'.format('-'*sizes[0], '-'*sizes[1], '-'*sizes[2], '-'*sizes[3]))
+
+                # reliase memory
+                del(client_ids)
+                del(client_ips)
+                del(client_ports)
+                del(client_part)
+
+            else:
+                print('[-] Command not recognized')
         
+        sleep(5)
         #close the opened log files
         self.server_log.close()
         self.error_log.close()
-        # after waiting the system must be terminated
-        exit(0)
 
     def start_server(self):
         """
@@ -338,12 +403,9 @@ class Server():
         self.server_log = open(prefix + 'server_log.txt', 'w')
 
         # firstly create two thread for the input and main server start
-        # server_start = threading.Thread(target=self.__main_server_start)
-        # master_input = threading.Thread(target=self.__main_master_input)
+        server_start = threading.Thread(target=self.__main_server_start)
+        master_input = threading.Thread(target=self.__main_master_input)
         
-        server_start = multiprocessing.Process(target=self.__main_server_start)
-        master_input = multiprocessing.Process(target=self.__main_master_input)
-
         # start both threads
         server_start.start()
         master_input.start()
