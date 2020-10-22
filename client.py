@@ -13,7 +13,7 @@ class Client():
 
         # create the socket
         self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.client.settimeout(2)
+        self.client.settimeout(5)
 
         self.terminate = False
 
@@ -36,18 +36,26 @@ class Client():
         while not self.terminate:
             message = self.recv_message()
             if message:
-                print(self.c.Cyan + f'[RECIVED] {message}' + self.c.RESET)
+                if str(system()) == 'Windows':
+                    print(f'[RECIVED] {message}')
+                else:
+                    print(self.c.Cyan + f'[RECIVED] {message}' + self.c.RESET)
 
     def send_message(self, message):
-        #fisrt of all we need to send size details
-        message_size = str(len(message)).encode('utf-8')
-        #procces message size details
-        message_size += b' ' * (self.buffer - len(message_size))
-        #send message size details
-        self.client.send(message_size)
-
-        #then send the message
-        self.client.send(message.encode('utf-8'))
+        # this function may raise an error when server is shutted down
+        try:
+            #fisrt of all we need to send size details
+            message_size = str(len(message)).encode('utf-8')
+            #procces message size details
+            message_size += b' ' * (self.buffer - len(message_size))
+            #send message size details
+            self.client.send(message_size)
+            #then send the message
+            self.client.send(message.encode('utf-8'))
+        
+        except ConnectionAbortedError:
+            print('[-] The server is down program is quiting...')
+            self.terminate = True
 
     def recv_message(self):
         try:
@@ -81,6 +89,7 @@ class Client():
 
         # after disconnecting kill those threads
         reciving_thread.join()
+        exit()
         sending_thread.join()
 
     def start_client(self):

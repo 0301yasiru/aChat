@@ -1,0 +1,11 @@
+20:55:43 ==> [START] Server is online and live 192.168.1.2 | 5151
+20:55:49 ==> [CONNECTION] new connection from 192.168.1.2 | 60402 | 0303yasiru
+20:55:56 ==> [CONNECTION] new connection from 192.168.1.2 | 60403 | 0302yasiru
+20:56:06 ==> [BINDED] 0302yasiru and 0303yasiru are binded
+20:56:06 ==> [FORWARD] msg forwarded to -> 0302yasiru
+20:56:07 ==> [FORWARD] msg forwarded to -> 0303yasiru
+20:56:16 ==> [RECIVED] msg recived from -> 0302yasiru
+20:56:16 ==> [FORWARD] msg forwarded to -> 0303yasiru
+20:56:23 ==> [RECIVED] msg recived from -> 0303yasiru
+20:56:24 ==> [FORWARD] msg forwarded to -> 0302yasiru
+20:56:33 ==> [SHUTDOWN] The server is shutting down
