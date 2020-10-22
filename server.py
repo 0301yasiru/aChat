@@ -38,10 +38,20 @@ class Server():
         client_id: user name of the client
         """
         try:
-            #firtly remove the connection from the other user
-            partner_id = self.client_details[client_id][1][0]
-            self.client_details[partner_id][1].clear()
-            self.client_details[partner_id][2].clear()
+            # an key erroro may be occured when unbinded client force fully closed the connection
+            # in thar case only remove that client and dont bother with partner
+            try:
+                #firtly remove the connection from the other user
+                partner_id = self.client_details[client_id][1][0]
+                self.client_details[partner_id][1][0] = None
+                self.client_details[partner_id][2].clear()
+                # and send the eject message to the partnet
+                self.send_message(self.client_details[partner_id][0], '[!]connection is over', partner_id)
+
+            except KeyError as err:
+                self.error_log.write(datetime.now().strftime("%H:%M:%S ==> "))
+                self.error_log.write('[KEYERROR] error msg -> {}\n'.format(err))
+
             #secondly delete the current session of the client
             del(self.client_details[client_id])
             print('[EJECT] client ejcted -> {}'.format(client_id))
@@ -49,7 +59,7 @@ class Server():
             self.server_log.write('[EJECT] client ejcted -> {}\n'.format(client_id))
         except IndexError as err:
             self.error_log.write(datetime.now().strftime("%H:%M:%S ==> "))
-            self.error_log.write('[INDEXERR] err msg -> {}\n'.format(err))
+            self.error_log.write('[INDEXERR] error msg -> {}\n'.format(err))
 
     def __hidden_send(self,conn, client_id):
         """
@@ -63,12 +73,25 @@ class Server():
         while (client_id in self.client_details) and (not self.terminate):
             # check if crrent client has messages in queu
             # if then forward it to them
-            if len(self.client_details[client_id][2]):
-                message = self.client_details[client_id][2].pop(0)
-                self.send_message(conn, message, client_id)
-                print(f'[FORWARD] msg forwarded to -> {client_id}')
-                self.server_log.write(datetime.now().strftime("%H:%M:%S ==> "))
-                self.server_log.write(f'[FORWARD] msg forwarded to -> {client_id}\n')
+
+            # though we checked client id in self.client_details stil it can be occure erorors
+            # to expect an key error
+            try:
+                # first of all check if other client terminated the connection
+                if self.client_details[client_id][1][0] == None:
+                    break
+                else:
+                    if len(self.client_details[client_id][2]):
+                        message = self.client_details[client_id][2].pop(0)
+                        self.send_message(conn, message, client_id)
+                        print(f'[FORWARD] msg forwarded to -> {client_id}')
+                        self.server_log.write(datetime.now().strftime("%H:%M:%S ==> "))
+                        self.server_log.write(f'[FORWARD] msg forwarded to -> {client_id}\n')
+
+            except KeyError as err:
+                self.error_log.write(datetime.now().strftime("%H:%M:%S ==> "))
+                self.error_log.write(f'[KEYERROR] error message -> {err}\n')
+                break
 
     def __hidden_recv(self, conn, client_id):
         """
@@ -79,18 +102,22 @@ class Server():
         # if the reject function removes client from the client list
         # this function must be terminated to check whether id in the list
         while (client_id in self.client_details) and (not self.terminate):
-            # firstly recive the message
-            message = self.recv_message(conn, client_id)
-            # check if the message is a none type then do not proceed
-            if message:
-                # then check if that is a command if not procees
-                if not self.__run_commands(message, conn, client_id):
-                    print(f'[RECIVED] msg recived from -> {client_id}')
-                    self.server_log.write(datetime.now().strftime("%H:%M:%S ==> "))
-                    self.server_log.write(f'[RECIVED] msg recived from -> {client_id}\n')
-                    # put that message in the partners message queue
-                    partner = self.client_details[client_id][1][0]
-                    self.client_details[partner][2].append(message)
+            # check if the other client ended the connection
+            if self.client_details[client_id][1][0] == None:
+                break
+            else:
+                # firstly recive the message
+                message = self.recv_message(conn, client_id)
+                # check if the message is a none type then do not proceed
+                if message:
+                    # then check if that is a command if not procees
+                    if not self.__run_commands(message, conn, client_id):
+                        print(f'[RECIVED] msg recived from -> {client_id}')
+                        self.server_log.write(datetime.now().strftime("%H:%M:%S ==> "))
+                        self.server_log.write(f'[RECIVED] msg recived from -> {client_id}\n')
+                        # put that message in the partners message queue
+                        partner = self.client_details[client_id][1][0]
+                        self.client_details[partner][2].append(message)
 
     def send_message(self, conn, message, client_id):
         """
@@ -186,23 +213,27 @@ class Server():
         try:
             # the connect command will bind teo client together, so they cantalk to ech other
             if message[0] == 'connect':
-                # chech if requested client online and live
-                if message[1] in self.client_details:
-                    #check if requested client already bound
-                    if self.client_details[message[1]][1] != None:
-                        self.client_details[message[1]][1][0] = client_id
-                        self.client_details[client_id][1][0] = message[1]
+                # you cannot connect your self
+                if message[1] != client_id:
+                    # chech if requested client online and live
+                    if message[1] in self.client_details:
+                        #check if requested client already bound
+                        if self.client_details[message[1]][1] != None:
+                            self.client_details[message[1]][1][0] = client_id
+                            self.client_details[client_id][1][0] = message[1]
 
-                        # sentd the connection status for booth clients
-                        self.client_details[message[1]][2] = [f'You are connected to -> {client_id}']
-                        self.client_details[client_id][2]  = [f'You are connected to -> {message[1]}']
-                        print('[BINDED] {} and {} are binded'.format(client_id, message[1]))
-                        self.server_log.write(datetime.now().strftime("%H:%M:%S ==> "))
-                        self.server_log.write('[BINDED] {} and {} are binded\n'.format(client_id, message[1]))
+                            # sentd the connection status for booth clients
+                            self.client_details[message[1]][2] = [f'You are connected to -> {client_id}']
+                            self.client_details[client_id][2]  = [f'You are connected to -> {message[1]}']
+                            print('[BINDED] {} and {} are binded'.format(client_id, message[1]))
+                            self.server_log.write(datetime.now().strftime("%H:%M:%S ==> "))
+                            self.server_log.write('[BINDED] {} and {} are binded\n'.format(client_id, message[1]))
+                        else:
+                            self.send_message(conn, '[-] Requested client already bounded', client_id)
                     else:
-                        self.send_message(conn, '[-] Requested client already bounded', client_id)
+                        self.send_message(conn, '[-] Requested client is not online', client_id)
                 else:
-                    self.send_message(conn, '[-] Requested client is not online', client_id)
+                    self.send_message(conn, '[-] You cannot connect your self', client_id)
                 return True
 
             # the quiting message. if this message recived eject the client
@@ -226,40 +257,51 @@ class Server():
         addr: ip and port combination of the client
         client_id: user name of the client
         """
-        
-        # this variable will used to switch if client forcefully clise the connection
-        # even before the bind of another client
+        # this main loop holds the client even avter their connection is over with othre client
+        while not self.terminate:
+            # this variable will used to switch if client forcefully clise the connection
+            # even before the bind of another client
 
-        client_aborted = False
+            client_aborted = False
 
-        # until a the user have and partner we cannot gofurther. the client must have an partner
-        # to chat with. so wait until client recive and partne id
+            # until a the user have and partner we cannot gofurther. the client must have an partner
+            # to chat with. so wait until client recive and partne id
 
-        while (self.client_details[client_id][1][0] == None) and (not self.terminate) :
-            # recive messgae
-            message = self.recv_message(conn, client_id)
-            if message:
-                self.__run_commands(message, conn, client_id)
+            #fisrt of all check if this client exists.(if this client quited the connection)
+            if client_id in self.client_details:
+                while (self.client_details[client_id][1][0] == None) and (not self.terminate) :
+                    # recive messgae
+                    message = self.recv_message(conn, client_id)
+                    if message:
+                        self.__run_commands(message, conn, client_id)
 
-            # if message is false connection reset error must be occured. means forcefully
-            # closed the connection. so abort the procedure and eject the client
-            elif message == False:
-                client_aborted = True
-                del(self.client_details[client_id])
+                    # if message is false connection reset error must be occured. means forcefully
+                    # closed the connection. so abort the procedure and eject the client
+                    elif message == False:
+                        client_aborted = True
+                        del(self.client_details[client_id])
+                        break
+
+                if not client_aborted:
+                    # create threads for recive messages and send messages
+                    reciving_thread = threading.Thread(target=self.__hidden_recv, args=(conn, client_id))
+                    sending_thread = threading.Thread(target=self.__hidden_send, args=(conn, client_id))
+
+                    # start threads
+                    reciving_thread.start()
+                    sending_thread.start()
+
+                    # after disconnecting kill those threads
+                    reciving_thread.join()
+                    sending_thread.join()
+                
+                else:
+                    # else the main loop also must be brocken
+                    break
+
+            else:
+                # if client closet their terminal quit the connection
                 break
-
-        if not client_aborted:
-            # create threads for recive messages and send messages
-            reciving_thread = threading.Thread(target=self.__hidden_recv, args=(conn, client_id))
-            sending_thread = threading.Thread(target=self.__hidden_send, args=(conn, client_id))
-
-            # start threads
-            reciving_thread.start()
-            sending_thread.start()
-
-            # after disconnecting kill those threads
-            reciving_thread.join()
-            sending_thread.join()
 
     def __main_server_start(self):
         """
@@ -270,9 +312,9 @@ class Server():
         #first of all start listening for the clients
         self.server.listen()
 
-        print('[START] Server is online and live')
+        print('[START] Server is online and live {} | {}'.format(self.host, self.port))
         self.server_log.write(datetime.now().strftime("%H:%M:%S ==> "))
-        self.server_log.write('[START] Server is online and live')
+        self.server_log.write('[START] Server is online and live {} | {}\n'.format(self.host, self.port))
 
         # accpet infinit clients
         while not self.terminate:
@@ -324,7 +366,7 @@ class Server():
                 print('[SHUTDOWN] The server is shutting down', end='')
 
                 self.server_log.write(datetime.now().strftime("%H:%M:%S ==> "))
-                self.server_log.write('[SHUTDOWN] The server will shutdown in 10 seconds\n')
+                self.server_log.write('[SHUTDOWN] The server is shutting down\n')
                 self.terminate = True
                 break
 
@@ -387,7 +429,7 @@ class Server():
             else:
                 print('[-] Command not recognized')
         
-        sleep(5)
+        sleep(10)
         #close the opened log files
         self.server_log.close()
         self.error_log.close()
