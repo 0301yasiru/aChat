@@ -98,6 +98,10 @@ class Client():
             fisrt try to connect to the server. And if sccueed
             send client data and establish the connection
         """
+        # print welcome message
+        print("\nClient Program started version: 1.0.0.0")
+        print('---------------------------------------\n')
+
         try:
             # connect to the server in order to start the client
             self.client.connect(self.addr)

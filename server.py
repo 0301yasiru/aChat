@@ -8,6 +8,8 @@ from random import randint
 from time import sleep
 from datetime import datetime
 from datetime import date
+from os import system
+import platform
 
 class Server():
     def __init__(self, host, port):    
@@ -153,19 +155,27 @@ class Server():
         # after 2 seconts it will continue the code
         conn.settimeout(2)
         try:
-            # receive the size of the message
-            msg_size = conn.recv(self.buffer).decode('utf-8')
-            # undo time out after this line
-            conn.settimeout(None)
-            # checking if msg is none or not if not proceed
-            if msg_size:
-                msg_size = int(msg_size) # this is the size of up comming message
-                msg = conn.recv(msg_size).decode('utf-8') #recive and decode
-                return msg #return message
-            else:
-                # return false if nothing recived
-                # so we can check for it and call again
-                return ""
+            # in this case unicode decode error may be occured
+            try:
+                # receive the size of the message
+                msg_size = conn.recv(self.buffer).decode('utf-8')
+                # undo time out after this line
+                conn.settimeout(None)
+                # checking if msg is none or not if not proceed
+                if msg_size:
+                    msg_size = int(msg_size) # this is the size of up comming message
+                    msg = conn.recv(msg_size).decode('utf-8') #recive and decode
+                    return msg #return message
+                else:
+                    # return false if nothing recived
+                    # so we can check for it and call again
+                    return ""
+            
+            except UnicodeDecodeError as err:
+                print(f'[UNICODEERROR] error msg -> {err}')
+                self.error_log.write(datetime.now().strftime("%H:%M:%S ==> "))
+                self.error_log.write(f'[UNICODEERROR] error msg -> {err}\n')
+
 
             conn.settimeout(None)
         
@@ -268,7 +278,7 @@ class Server():
             # to chat with. so wait until client recive and partne id
 
             #fisrt of all check if this client exists.(if this client quited the connection)
-            if client_id in self.client_details:
+            try:
                 while (self.client_details[client_id][1][0] == None) and (not self.terminate) :
                     # recive messgae
                     message = self.recv_message(conn, client_id)
@@ -299,8 +309,10 @@ class Server():
                     # else the main loop also must be brocken
                     break
 
-            else:
+            except KeyError as err:
                 # if client closet their terminal quit the connection
+                self.error_log.write(datetime.now().strftime("%H:%M:%S ==> "))
+                self.error_log.write('[KEYERROR] error msg -> {}\n'.format(err))
                 break
 
     def __main_server_start(self):
@@ -371,60 +383,69 @@ class Server():
                 break
 
             elif command == 'list_clients' or command == 'clients':
-                    
-                # firstly get client ids
-                client_ids = list(self.client_details.keys())
-                client_ids.insert(0, 'U_NAME')
-                # then get client keys
-                client_vals = self.client_details.values()
-                # client addrs and partnets from the values
-                client_combination = [(item[0].getpeername(), item[1][0]) for item in client_vals]
-                # we dont need vals any moe delete it from the ram
-                del(client_vals)
-                # devide addresses and partner names
-                client_addr, client_part = zip(*client_combination)
-                client_part = list(client_part)
-                client_part.insert(0, 'PARTNER')
-                client_part = list(map(str, client_part))
-                # dlete the client combination
-                del(client_combination)
-                # devide ips and ports from the addrs
-                client_ips, client_ports = map(list, zip(*client_addr))
-                client_ips.insert(0, 'IP ADDR')
-                client_ports.insert(0, 'PORT')
-                # delete client address
-                del(client_addr)
+                # in this case value error may occure if no clients exists
+                try:
 
-                # form the size table
-                sizes = [max(map(lambda item : len(item), client_ids)) + 2]
-                sizes.append(max(map(lambda item : len(item), client_ips)) + 2)
-                sizes.append(max(map(lambda item : len(str(item)), client_ports)) + 2)
-                sizes.append(max(map(lambda item : len(str(item)), client_part)) + 2)
+                    # firstly get client ids
+                    client_ids = list(self.client_details.keys())
+                    client_ids.insert(0, 'U_NAME')
+                    # then get client keys
+                    client_vals = self.client_details.values()
+                    # client addrs and partnets from the values
+                    client_combination = [(item[0].getpeername(), item[1][0]) for item in client_vals]
+                    # we dont need vals any moe delete it from the ram
+                    del(client_vals)
+                    # devide addresses and partner names
+                    client_addr, client_part = zip(*client_combination)
+                    client_part = list(client_part)
+                    client_part.insert(0, 'PARTNER')
+                    client_part = list(map(str, client_part))
+                    # dlete the client combination
+                    del(client_combination)
+                    # devide ips and ports from the addrs
+                    client_ips, client_ports = map(list, zip(*client_addr))
+                    client_ips.insert(0, 'IP ADDR')
+                    client_ports.insert(0, 'PORT')
+                    # delete client address
+                    del(client_addr)
 
-                # print the table
+                    # form the size table
+                    sizes = [max(map(lambda item : len(item), client_ids)) + 2]
+                    sizes.append(max(map(lambda item : len(item), client_ips)) + 2)
+                    sizes.append(max(map(lambda item : len(str(item)), client_ports)) + 2)
+                    sizes.append(max(map(lambda item : len(str(item)), client_part)) + 2)
 
-                print('+{}+{}+{}+{}+'.format('-'*sizes[0], '-'*sizes[1], '-'*sizes[2], '-'*sizes[3]))
+                    # print the table
 
-                print('|{0:^{4}}|{1:^{5}}|{2:^{6}}|{3:^{7}}|'.format(
-                    client_ids[0], client_ips[0], client_ports[0], client_part[0],
-                    sizes[0], sizes[1], sizes[2], sizes[3]
-                ))
+                    print('+{}+{}+{}+{}+'.format('-'*sizes[0], '-'*sizes[1], '-'*sizes[2], '-'*sizes[3]))
 
-                print('+{}+{}+{}+{}+'.format('-'*sizes[0], '-'*sizes[1], '-'*sizes[2], '-'*sizes[3]))
-
-                for i in range(1, len(client_ids)):
                     print('|{0:^{4}}|{1:^{5}}|{2:^{6}}|{3:^{7}}|'.format(
-                        client_ids[i], client_ips[i], client_ports[i], client_part[i],
+                        client_ids[0], client_ips[0], client_ports[0], client_part[0],
                         sizes[0], sizes[1], sizes[2], sizes[3]
                     ))
 
-                print('+{}+{}+{}+{}+'.format('-'*sizes[0], '-'*sizes[1], '-'*sizes[2], '-'*sizes[3]))
+                    print('+{}+{}+{}+{}+'.format('-'*sizes[0], '-'*sizes[1], '-'*sizes[2], '-'*sizes[3]))
 
-                # reliase memory
-                del(client_ids)
-                del(client_ips)
-                del(client_ports)
-                del(client_part)
+                    for i in range(1, len(client_ids)):
+                        print('|{0:^{4}}|{1:^{5}}|{2:^{6}}|{3:^{7}}|'.format(
+                            client_ids[i], client_ips[i], client_ports[i], client_part[i],
+                            sizes[0], sizes[1], sizes[2], sizes[3]
+                        ))
+
+                    print('+{}+{}+{}+{}+'.format('-'*sizes[0], '-'*sizes[1], '-'*sizes[2], '-'*sizes[3]))
+
+                    # reliase memory
+                    del(client_ids)
+                    del(client_ips)
+                    del(client_ports)
+                    del(client_part)
+
+                except ValueError:
+                    print('[-] No clients exists yet ...')
+
+            elif command == 'clear':
+                if str(platform.system()) == 'Windows': system('cls')
+                else: system('clear')
 
             else:
                 print('[-] Command not recognized')
