@@ -1,5 +1,7 @@
 import socket
 import threading
+from colors import COLORS
+from platform import system
 
 class Client():
     def __init__(self, client_id, server, port):
@@ -11,11 +13,19 @@ class Client():
 
         # create the socket
         self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.client.settimeout(2)
+
+        self.terminate = False
+
+        self.c = COLORS()
 
     def __hidden_send(self):
-        while True:
+        while not self.terminate:
             try:
                 current_msg = input().strip()
+                if current_msg == 'conn_quit()':
+                    self.terminate =True
+
                 self.send_message(current_msg)
                 print()
 
@@ -23,10 +33,10 @@ class Client():
                 exit()
 
     def __hidden_recv(self):
-        while True:
+        while not self.terminate:
             message = self.recv_message()
             if message:
-                print(f'[RECIVED] {message}')
+                print(self.c.Cyan + f'[RECIVED] {message}' + self.c.RESET)
 
     def send_message(self, message):
         #fisrt of all we need to send size details
@@ -55,6 +65,10 @@ class Client():
 
         except ConnectionResetError:
             exit()
+
+        except OSError:
+            # this error occure wen time out
+            return False
 
     def __handle_client(self):
         # create threads for recive messages and send messages
