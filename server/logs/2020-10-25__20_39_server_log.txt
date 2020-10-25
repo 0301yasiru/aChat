@@ -1,0 +1,18 @@
+20:39:40 ==> [START] Server is online and live 192.168.1.4 | 5050
+20:40:21 ==> [CONNECTION] new connection from 192.168.1.4 | 51222 | 0302yasiru
+20:41:00 ==> [CONNECTION] new connection from 192.168.1.4 | 51226 | 0303yasiru
+20:41:09 ==> [BINDED] 0303yasiru and 0302yasiru are binded
+20:41:09 ==> [FORWARD] msg forwarded to -> 0303yasiru
+20:41:10 ==> [FORWARD] msg forwarded to -> 0302yasiru
+20:41:24 ==> [RECIVED] msg recived from -> 0302yasiru
+20:41:24 ==> [FORWARD] msg forwarded to -> 0303yasiru
+20:41:29 ==> [EJECT] client ejcted -> 0302yasiru
+20:42:07 ==> [CONNECTION] new connection from 192.168.1.4 | 51229 | 0302yasiru
+20:42:28 ==> [BINDED] 0303yasiru and 0302yasiru are binded
+20:42:28 ==> [FORWARD] msg forwarded to -> 0303yasiru
+20:42:29 ==> [FORWARD] msg forwarded to -> 0302yasiru
+20:43:04 ==> [RECIVED] msg recived from -> 0302yasiru
+20:43:05 ==> [FORWARD] msg forwarded to -> 0303yasiru
+20:43:18 ==> [RECIVED] msg recived from -> 0303yasiru
+20:43:18 ==> [FORWARD] msg forwarded to -> 0302yasiru
+20:43:49 ==> [SHUTDOWN] The server is shutting down
