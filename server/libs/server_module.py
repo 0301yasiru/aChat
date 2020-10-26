@@ -341,17 +341,19 @@ class Server():
                 #now recive the client id from the client
                 client_id = self.recv_message(conn)
 
-                print(f'{c.Green+c.BOLD}[CONNECTION]{c.RESET+c.Green} new connection from {c.ULINE+addr[0]} | {addr[1]} | {client_id+c.RESET}')
-                self.server_log.write(datetime.now().strftime("%H:%M:%S ==> "))
-                self.server_log.write(f'[CONNECTION] new connection from {addr[0]} | {addr[1]} | {client_id}\n')
+                # check if the client in the blacklist
+                if client_id no in self.balcklist:
+                    print(f'{c.Green+c.BOLD}[CONNECTION]{c.RESET+c.Green} new connection from {c.ULINE+addr[0]} | {addr[1]} | {client_id+c.RESET}')
+                    self.server_log.write(datetime.now().strftime("%H:%M:%S ==> "))
+                    self.server_log.write(f'[CONNECTION] new connection from {addr[0]} | {addr[1]} | {client_id}\n')
 
-                #add client details for the dictionary
-                self.client_details[client_id] = [conn, [None], []]
-                print(f'{c.Green+c.BOLD}[DETAILS]{c.RESET+c.Green} now {len(self.client_details)}(s) clients are online', c.RESET)
-                #create thread for the client
-                client_thread = threading.Thread(target=self.__handle_clients, args=(conn, addr, client_id))
-                #start thread
-                client_thread.start()
+                    #add client details for the dictionary
+                    self.client_details[client_id] = [conn, [None], []]
+                    print(f'{c.Green+c.BOLD}[DETAILS]{c.RESET+c.Green} now {len(self.client_details)}(s) clients are online', c.RESET)
+                    #create thread for the client
+                    client_thread = threading.Thread(target=self.__handle_clients, args=(conn, addr, client_id))
+                    #start thread
+                    client_thread.start()
             
             except OSError as err:
                 if str(err) != 'timed out':

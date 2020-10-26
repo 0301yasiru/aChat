@@ -1,3 +1,4 @@
+# !/usr/bin/python
 import socket
 import threading
 from colors import COLORS
@@ -5,6 +6,12 @@ from platform import system
 
 class Client():
     def __init__(self, client_id, server, port):
+        """
+        DOCSTRING: this function will initalize all the global varables for the class
+        client_id: this is the user name of the server
+        server   : this is the IP address of the server to be connecter
+        port     : this is the PORT of the server to be connected
+        """
         self.buffer = 64
         self.client_id = client_id
         self.server = server
@@ -14,13 +21,24 @@ class Client():
         # create the socket
         self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.client.settimeout(5)
-
+        # terminate varibale is the most important variable in the class
+        # of the terminate varible set to True all loops will terminate imidiatly
+        # all the threads will terminate
+        # and the client will shutdown
         self.terminate = False
 
         self.c = COLORS()
 
     def __hidden_send(self):
+         """
+        DOCSTRING: this is the function which uses by the thread to forward
+        messages
+        conn: connection of the client
+        client_id: user name of the client
+        """
+        # while the terminate variable is False run the infinite loop
         while not self.terminate:
+            # in this case a OS error will be raised when the input timeout
             try:
                 current_msg = input().strip()
                 if current_msg == 'conn_quit()':
@@ -33,6 +51,11 @@ class Client():
                 exit()
 
     def __hidden_recv(self):
+        """
+        DOCSTRING: this is the function which uses by the thread to recevie messages
+        conn: connection of the client
+        client_id: user name of the client
+        """
         while not self.terminate:
             message = self.recv_message()
             if message:
@@ -42,6 +65,12 @@ class Client():
                     print(self.c.Cyan + f'[RECIVED] {message}' + self.c.RESET)
 
     def send_message(self, message):
+        """
+        DOCSTRING: this is the primary function to sent messages anyway
+        conn: connection of the client
+        message: the message as an string
+        client_id: user name of the client
+        """
         # this function may raise an error when server is shutted down
         try:
             #fisrt of all we need to send size details
@@ -58,6 +87,11 @@ class Client():
             self.terminate = True
 
     def recv_message(self):
+        """
+        DOCSTRING: this is the primary function to receve messages
+        conn: connection of the client
+        client_id: user name of the client (this info will use to eject client)
+        """
         try:
             msg_size = self.client.recv(self.buffer).decode('utf-8')
             # checking if msg is none or not if not proceed
@@ -79,6 +113,11 @@ class Client():
             return False
 
     def __handle_client(self):
+        """
+        DOCSTRING: the pusrpose of this function is simple. Al this has to do
+        create two thread for sending and revceving messages. and handle
+        those clients
+        """
         # create threads for recive messages and send messages
         reciving_thread = threading.Thread(target=self.__hidden_recv)
         sending_thread = threading.Thread(target=self.__hidden_send)
@@ -122,19 +161,4 @@ class Client():
             exit(0)
 
 
-def read_conf_file():
-    with open('client.conf', 'r') as config_file:
-        config_data = config_file.readlines()
-
-    client_conf_data = {}
-
-    for line in config_data:
-        line = line.split()
-        client_conf_data[line[0]] = line[1:]
-
-    return client_conf_data
-
-conf_data = read_conf_file()
-
-client_instance = Client(conf_data['client_id:'][0], conf_data['host:'][0], int(conf_data['port:'][0]))
-client_instance.start_client()
+# end of the client class
