@@ -1,3 +1,4 @@
+
 # ServerClient Project
 First of all this is not a hacking project. This is a simple chat server. You can connect many clients as you want to the server, after that you can connect to another partner and start chatting. The server will recive your message and formard it to the other client.
 ## Download the Project
@@ -43,8 +44,26 @@ Before you start the server you must have configured the config file. You can do
  1. Firsly run the main script (After locating the server directory).<br>
  `python3 main.py`
  
- 2. Configure the server using commands.
-	 a. use show command to view configuration of server blacklist ... etc.<br>
+ 2. Configure the server using commands.<br>
+	 a. Use **show** command to view configuration of server blacklist ... etc.<br>
 	 `#SERVER/> show server`<br>
 	 `#SERVER/> show blacklist`<br>
 	 `#SERVER/> show whitelist`<br>
+	 b. Use **set** command to set port and host in the server configuration.<br>
+	 `set server port 5151`<br>
+	 `set server host 192.168.1.56`<br>
+	 c. Use **add/remove** command to add or remove clients to blacklist or whitelist.<br>
+	 `blacklist add 0301yasiru`<br>
+	 `blacklist remove someuser`<br>
+	 `whitelist add 0301yasiru`<br>
+	 `whitelist remove 0301yasiru__`<br>
+	 d. Finally, use **start/run** command to start the server.<br>
+	 `run`<br>
+
+ 3. After you start the server you can use following utility commands.<br>
+	 a. Use **clients** commands to view the connected clients.<br>
+	 `clients`<br>
+	 b. Use **clear** command to clear the screen.<br>
+	 `clear`<br>
+	 c. Use **poweroff** command to shut down the server.<br>
+	 `poweroff`<br>
