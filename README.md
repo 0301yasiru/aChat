@@ -1,5 +1,5 @@
 
-# ServerClient Project
+# aChat is for Anonymous Chat 😉
 First of all this is not a hacking project. This is a simple chat server. You can connect many clients as you want to the server, after that you can connect to another partner and start chatting. The server will recive your message and formard it to the other client.
 ## Download the Project
 Downloading proccess is simple. Just clone the repository or click [here](https://codeload.github.com/0301yasiru/ServerClient/zip/main) to download.
