@@ -342,7 +342,7 @@ class Server():
                 client_id = self.recv_message(conn)
 
                 # check if the client in the blacklist
-                if client_id no in self.balcklist:
+                if client_id not in self.balcklist:
                     print(f'{c.Green+c.BOLD}[CONNECTION]{c.RESET+c.Green} new connection from {c.ULINE+addr[0]} | {addr[1]} | {client_id+c.RESET}')
                     self.server_log.write(datetime.now().strftime("%H:%M:%S ==> "))
                     self.server_log.write(f'[CONNECTION] new connection from {addr[0]} | {addr[1]} | {client_id}\n')
