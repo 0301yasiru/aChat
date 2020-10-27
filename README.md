@@ -67,3 +67,16 @@ Before you start the server you must have configured the config file. You can do
 	 `clear`<br>
 	 c. Use **poweroff** command to shut down the server.<br>
 	 `poweroff`<br>
+
+## How to Use Client
+This is the easiest in this article. After you configured **client.conf** file you can run the client script.
+
+ 1. Firtly locate the client directory.<br>
+ `cd ServerClient\client\`<br>
+ 
+ 2. Then run the main script using python3.<br>
+ `python3 main.py`<br>
+ 
+ 3. After client program started, you can connect to another client or you can wait until some other client connects you. If you want to communicate to another client you must know his/her **user name**. You can connect your partner using **connect** command.<br> 
+ `connect <partners username>`<br>
+ `connect 0301yasiru`<br>
