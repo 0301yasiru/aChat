@@ -141,8 +141,12 @@ def run_commands(command):
     # the command clear will clear the screen
     elif command[0] == 'clear':
         # check for the operatin system
-        if operatingsys() == 'Windiws': system('cls')
+        if str(operatingsys()) == 'Windows': system('cls')
         else: system('clear')
+
+    elif command[0] == 'help':
+        with open('libs\\help_main.txt', 'r') as help_file:
+            print(help_file.read(), end='\n\n\n')
 
     else:
         try:

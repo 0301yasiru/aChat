@@ -1,0 +1,33 @@
+aChat main server handler help version 1.0.0.0
+==============================================
+
+Here are the list of commands you can use inside the main handler
+
+1) show
+    SYNTAX:     show <configuration>
+    EXAMPLE:    show server, show blacklist, show whitelist
+
+    This command will present your current configuration of selected
+    main configuration topic
+
+2) set
+    SYNTAX:     set <configuration> <key> <value>
+    EXAMPLE:    set server port 5050, set server host 192.168.1.1
+
+    You can change current configuraiton of your server using this command
+
+3) add
+    SYNTAX:     <configuration> add <new_value>
+    EXAMPLE:    blacklist add yasiru, whitelist add manohari
+
+    You can append some user to a configutaion using this command
+
+4) remove
+    SYNTAX:     <configuraiton> remove <new_value>
+    EXAMPLE:    blacklist remove yasiru, whitelist remove manohari
+
+    You can remove some user using this command
+
+5) quit
+    
+    You can quit the program using this command

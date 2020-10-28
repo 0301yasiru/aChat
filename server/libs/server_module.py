@@ -3,7 +3,6 @@
 # this is the script for the server
 
 from libs.colors import COLORS
-from random import randint
 from time import sleep
 from datetime import datetime
 from datetime import date
@@ -388,6 +387,10 @@ class Server():
                 self.server_log.write('[SHUTDOWN] The server is shutting down\n')
                 self.terminate = True
                 break
+
+            elif command == 'help':
+                with open('libs\\help_server_module.txt', 'r') as help_file:
+                    print(help_file.read(), end='\n\n\n')
 
             elif command == 'list_clients' or command == 'clients':
                 # in this case value error may occure if no clients exists

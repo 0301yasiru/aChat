@@ -1,0 +1,11 @@
+aChat HELP version 1.0.0.0
+==========================
+
+Here are the list of all commands you can use inside the server program
+
+1) list_clients / clients
+	Use this command to view all the connected clients and their
+	other information (IP, PORT, UNAME, PARTNER) etc.
+
+2) poweroff
+	Use this command to shutdown the server

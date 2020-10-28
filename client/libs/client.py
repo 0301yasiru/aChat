@@ -1,8 +1,9 @@
 # !/usr/bin/python
 import socket
 import threading
-from colors import COLORS
+from libs.colors import COLORS
 from platform import system
+from libs.cryption import decrypt, encrypt
 
 class Client():
     def __init__(self, client_id, server, port):
@@ -30,7 +31,7 @@ class Client():
         self.c = COLORS()
 
     def __hidden_send(self):
-         """
+        """
         DOCSTRING: this is the function which uses by the thread to forward
         messages
         conn: connection of the client
@@ -73,6 +74,8 @@ class Client():
         """
         # this function may raise an error when server is shutted down
         try:
+            # before anthiyng else encrypt your message
+            message = encrypt(message)
             #fisrt of all we need to send size details
             message_size = str(len(message)).encode('utf-8')
             #procces message size details
@@ -98,6 +101,8 @@ class Client():
             if msg_size:
                 msg_size = int(msg_size) # this is the size of up comming message
                 msg = self.client.recv(msg_size).decode('utf-8') #recive and decode
+                #before return decrypt the message
+                msg = decrypt(msg)
                 return msg #return message
             
             else:
