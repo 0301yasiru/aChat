@@ -4,7 +4,7 @@ First of all this is not a hacking project. This is a simple chat server. You ca
 ## Download the Project
 Downloading proccess is simple. Just clone the repository or click [here](https://codeload.github.com/0301yasiru/ServerClient/zip/main) to download.
 
-    git clone https://github.com/0301yasiru/ServerClient.git
+    git clone https://github.com/0301yasiru/aChat.git
 
 ## Installation of server
 This server script does not require any special liblaries. **And both scripts are programmed to work on both Linux and Wondows** (*better on linux*). So you can run the server scripts directly. Here are the steps,
