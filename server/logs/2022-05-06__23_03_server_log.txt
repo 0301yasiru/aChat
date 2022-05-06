@@ -1,0 +1,24 @@
+23:03:17 ==> [START] Server is online and live 192.168.56.1 | 5151
+23:03:22 ==> [CONNECTION] new connection from 192.168.56.1 | 62361 | sampler1
+23:03:28 ==> [CONNECTION] new connection from 192.168.56.1 | 62362 | green1
+23:03:36 ==> [BINDED] green1 and sampler1 are binded
+23:03:36 ==> [FORWARD] msg forwarded to -> green1
+23:03:38 ==> [FORWARD] msg forwarded to -> sampler1
+23:03:44 ==> [RECIVED] msg recived from -> sampler1
+23:03:44 ==> [FORWARD] msg forwarded to -> green1
+23:03:48 ==> [RECIVED] msg recived from -> sampler1
+23:03:48 ==> [FORWARD] msg forwarded to -> green1
+23:03:52 ==> [RECIVED] msg recived from -> sampler1
+23:03:52 ==> [FORWARD] msg forwarded to -> green1
+23:03:55 ==> [EJECT] client ejcted -> sampler1
+23:03:56 ==> [EJECT] client ejcted -> green1
+23:07:25 ==> [CONNECTION] new connection from 192.168.56.1 | 62371 | sampler1
+23:07:35 ==> [CONNECTION] new connection from 192.168.56.1 | 62372 | green1
+23:07:46 ==> [BINDED] green1 and sampler1 are binded
+23:07:46 ==> [FORWARD] msg forwarded to -> green1
+23:07:47 ==> [FORWARD] msg forwarded to -> sampler1
+23:07:56 ==> [RECIVED] msg recived from -> sampler1
+23:07:56 ==> [FORWARD] msg forwarded to -> green1
+23:09:08 ==> [EJECT] client ejcted -> sampler1
+23:09:15 ==> [EJECT] client ejcted -> green1
+23:09:19 ==> [SHUTDOWN] The server is shutting down
