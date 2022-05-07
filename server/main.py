@@ -23,7 +23,7 @@ def proccess_data(data):
 
     # group for main configurations after deviding to sections
     for result in results:
-        # check if this is host: 192.16845.32 kind of configuration
+        # check if this is host: 192.168.45.32 kind of configuration
         val_filter = findall(r'(\w+):\s(.*)', result[1])
 
         # if so it will be add to main configuration dictionary

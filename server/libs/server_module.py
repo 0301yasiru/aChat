@@ -11,6 +11,14 @@ import threading
 import socket
 import platform
 
+from os import remove
+from sys import argv
+from base64 import urlsafe_b64encode
+from cryptography.fernet import Fernet
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+
 #create and global instance for the coloring puspose
 c = COLORS()
 
@@ -22,6 +30,9 @@ class Server():
         self.buffer = 64
         self.client_details = {}
         self.balcklist = []
+
+        self.passwd = 'A4nJ!dk@12en#jfdk*kjns.sdjk'
+        self.key = self.key_gen(self.passwd)
 
         self.error_log = '' # to be initialized
         self.server_log = '' # to be initialized
@@ -35,6 +46,46 @@ class Server():
         self.server.settimeout(5)
 
         self.terminate = False
+
+    def key_gen(self, passwd):
+        # convert passwd to bytes
+        passwd = passwd.encode('utf-8')
+        # create a random salt from os
+        salt = b'\xd1\xafy\x8d\xd1/\xa1Pv4\xea\xf1-1\xe0~\xb2$\x17D\xdd\xa7\x8fwrmd\x02\x7f`f:'
+        # create kdf instance
+        kdf = PBKDF2HMAC(
+            algorithm=hashes.SHA256(),
+            length=32,
+            salt=salt,
+            iterations=100000,
+            backend=default_backend()
+        )
+        # derive an key prom the passwd
+        key = urlsafe_b64encode(kdf.derive(passwd))
+        #return key
+        return key
+
+    def decrypt(self, message):
+        """
+        DOCSTRING: This function will return the decrypted message as string
+        message: the message to decrypt as string
+        key: key for decryption as bytes
+        """
+        fernet_obj = Fernet(self.key) # create fernet obj
+        original_content = fernet_obj.decrypt(message.encode('utf-8'))
+
+        return original_content.decode('utf-8')
+
+    def encrypt(self, message):
+        """
+        DOCSTRING: This function will return the encrypted message as string
+        message: the message to encrypt as string
+        key: key for encryption as bytes
+        """
+        fernet_obj = Fernet(self.key)
+        encrypted_message = fernet_obj.encrypt(message.encode('utf-8'))
+
+        return encrypted_message.decode('utf-8')
 
     def __eject_client(self, client_id):
         """
@@ -125,7 +176,7 @@ class Server():
                         partner = self.client_details[client_id][1][0]
                         self.client_details[partner][2].append(message)
 
-    def send_message(self, conn, message, client_id):
+    def send_message(self, conn, message, client_id, encrypt = True):
         """
         DOCSTRING: this is the primary function to sent messages anyway
         conn: connection of the client
@@ -134,6 +185,7 @@ class Server():
         """
         try:
             #fisrt of all we need to send size details
+            message = self.encrypt(message)
             message_size = str(len(message)).encode('utf-8')
             #procces message size details
             message_size += b' ' * (self.buffer - len(message_size))
@@ -169,6 +221,7 @@ class Server():
                 if msg_size:
                     msg_size = int(msg_size) # this is the size of up comming message
                     msg = conn.recv(msg_size).decode('utf-8') #recive and decode
+                    msg = self.decrypt(msg)
                     return msg #return message
                 else:
                     # return false if nothing recived

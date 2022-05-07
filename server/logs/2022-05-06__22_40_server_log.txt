@@ -1,6 +1,0 @@
-22:40:24 ==> [START] Server is online and live 192.168.56.1 | 5151
-22:40:28 ==> [CONNECTION] new connection from 192.168.56.1 | 62297 | 0303yasiru
-22:40:56 ==> [EJECT] client ejcted -> 0303yasiru
-22:41:08 ==> [CONNECTION] new connection from 192.168.56.1 | 62299 | 0303yasiru
-22:41:14 ==> [EJECT] client ejcted -> 0303yasiru
-22:42:30 ==> [SHUTDOWN] The server is shutting down

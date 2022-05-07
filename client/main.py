@@ -16,3 +16,4 @@ conf_data = read_conf_file()
 
 client_instance = Client(conf_data['client_id:'][0], conf_data['host:'][0], int(conf_data['port:'][0]))
 client_instance.start_client()
+

@@ -1,4 +1,0 @@
-22:40:56 ==> [KEYERROR] error msg -> None
-22:40:56 ==> [KEYERROR] error msg -> '0303yasiru'
-22:41:14 ==> [KEYERROR] error msg -> None
-22:41:14 ==> [KEYERROR] error msg -> '0303yasiru'

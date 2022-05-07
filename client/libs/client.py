@@ -3,7 +3,16 @@ import socket
 import threading
 from libs.colors import COLORS
 from platform import system
-from libs.cryption import decrypt, encrypt
+
+from os import remove
+from sys import argv
+from base64 import urlsafe_b64encode
+from cryptography.fernet import Fernet
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+
+
 
 class Client():
     def __init__(self, client_id, server, port):
@@ -13,6 +22,8 @@ class Client():
         server   : this is the IP address of the server to be connecter
         port     : this is the PORT of the server to be connected
         """
+        self.passwd = 'A4nJ!dk@12en#jfdk*kjns.sdjk'
+        self.key = self.key_gen(self.passwd)
         self.buffer = 64
         self.client_id = client_id
         self.server = server
@@ -29,6 +40,46 @@ class Client():
         self.terminate = False
 
         self.c = COLORS()
+
+    def key_gen(self, passwd):
+        # convert passwd to bytes
+        passwd = passwd.encode('utf-8')
+        # create a random salt from os
+        salt = b'\xd1\xafy\x8d\xd1/\xa1Pv4\xea\xf1-1\xe0~\xb2$\x17D\xdd\xa7\x8fwrmd\x02\x7f`f:'
+        # create kdf instance
+        kdf = PBKDF2HMAC(
+            algorithm=hashes.SHA256(),
+            length=32,
+            salt=salt,
+            iterations=100000,
+            backend=default_backend()
+        )
+        # derive an key prom the passwd
+        key = urlsafe_b64encode(kdf.derive(passwd))
+        #return key
+        return key
+
+    def decrypt(self, message):
+        """
+        DOCSTRING: This function will return the decrypted message as string
+        message: the message to decrypt as string
+        key: key for decryption as bytes
+        """
+        fernet_obj = Fernet(self.key) # create fernet obj
+        original_content = fernet_obj.decrypt(message.encode('utf-8'))
+
+        return original_content.decode('utf-8')
+
+    def encrypt(self, message):
+        """
+        DOCSTRING: This function will return the encrypted message as string
+        message: the message to encrypt as string
+        key: key for encryption as bytes
+        """
+        fernet_obj = Fernet(self.key)
+        encrypted_message = fernet_obj.encrypt(message.encode('utf-8'))
+
+        return encrypted_message.decode('utf-8')
 
     def __hidden_send(self):
         """
@@ -65,7 +116,7 @@ class Client():
                 else:
                     print(self.c.Cyan + f'[RECIVED] {message}' + self.c.RESET)
 
-    def send_message(self, message, encrypt_= False):
+    def send_message(self, message, encrypt_= True):
         """
         DOCSTRING: this is the primary function to sent messages anyway
         conn: connection of the client
@@ -75,7 +126,7 @@ class Client():
         # this function may raise an error when server is shutted down
         try:
             # before anthiyng else encrypt your message
-            if encrypt_: message = encrypt(message)
+            if encrypt_: message = self.encrypt(message)
             #fisrt of all we need to send size details
             message_size = str(len(message)).encode('utf-8')
             #procces message size details
@@ -89,7 +140,7 @@ class Client():
             print('[-] The server is down program is quiting...')
             self.terminate = True
 
-    def recv_message(self, encrypt = False):
+    def recv_message(self, encrypt = True):
         """
         DOCSTRING: this is the primary function to receve messages
         conn: connection of the client
@@ -103,7 +154,7 @@ class Client():
                 msg = self.client.recv(msg_size).decode('utf-8') #recive and decode
                 #before return decrypt the message
                 if encrypt:
-                    msg = decrypt(msg)
+                    msg = self.decrypt(msg)
                 return msg #return message
             
             else:
@@ -146,12 +197,14 @@ class Client():
         # print welcome message
         print("\nClient Program started version: 1.0.0.0")
         print('---------------------------------------\n')
+        print('Your Client ID -> {}'.format(self.client_id))
+        print('----------------------------------------\n')
 
         try:
             # connect to the server in order to start the client
             self.client.connect(self.addr)
             # send client data
-            self.send_message(self.client_id, encrypt_=False)
+            self.send_message(self.client_id)
             self.__handle_client()
 
         except ConnectionRefusedError:
